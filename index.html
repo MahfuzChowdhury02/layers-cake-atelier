@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Layers — Cake Atelier</title>
+<meta name="description" content="Layer cakes cut clean, layered right and finished by hand.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ddd4c5; --paper-2:#d3c9b8; --stage:#d9cebd; --ink:#1d1a17; --muted:#5f584e;
+    --red:#c22d1f; --cream:#f6efe4; --choc:#2a170f;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Archivo',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  canvas{display:block}
+  button{font:inherit;color:inherit}
+  a{color:inherit}
+  .display{font-weight:700;font-variation-settings:'wdth' 125;letter-spacing:-.035em;line-height:.9}
+  .serif{font-family:'Newsreader',Georgia,serif}
+  em{font-style:normal;color:var(--red)}
+  :focus-visible{outline:2px solid var(--red);outline-offset:3px}
+
+  /* nav */
+  .nav{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:20px 40px;font-size:14px;transition:color .4s}
+  body.on-dark .nav{color:var(--cream)}
+  .brand{display:flex;gap:10px;align-items:center;text-decoration:none;font-weight:700;font-variation-settings:'wdth' 125;letter-spacing:-.01em;font-size:17px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--red)}
+  .nav nav{display:flex;gap:22px;align-items:center}
+  .nav nav a{text-decoration:none}
+  .nav nav a:hover{text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+  .order{display:inline-flex;align-items:center;gap:8px;border:1px solid currentColor;border-radius:999px;padding:7px 14px;background:transparent;cursor:pointer;font-size:13px}
+  .order b{min-width:18px;height:18px;border-radius:999px;background:var(--red);color:#fff;font-size:11px;display:grid;place-items:center;padding:0 5px}
+
+  /* story */
+  .story{position:relative;height:640vh}
+  .stage{position:sticky;top:0;height:100vh;height:100lvh;overflow:hidden;background:var(--stage)}
+  .stage canvas{position:absolute;inset:0;width:100%;height:100%}
+  .hero{position:absolute;inset:0;pointer-events:none;will-change:opacity,transform}
+  .hero-title{position:absolute;left:40px;top:max(80px,10vh);margin:0;font-size:clamp(64px,13vw,220px)}
+  .tagline{position:absolute;right:40px;top:max(90px,12vh);margin:0;max-width:20ch;text-align:right;font-size:clamp(17px,1.5vw,22px);line-height:1.3;color:#3a352f}
+  .caps{position:absolute;left:40px;top:clamp(110px,22vh,240px);width:min(380px,30vw);pointer-events:none}
+  .cap{position:absolute;inset:0 auto auto 0;width:100%;opacity:0;transform:translateY(18px);transition:opacity .45s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
+  .cap.on{opacity:1;transform:none}
+  .num{font-size:12px;letter-spacing:.08em;color:#6b645a}
+  .cap h2{margin:.18em 0 .2em;font-size:clamp(44px,5.4vw,92px)}
+  .cap p{margin:0 0 16px;font-size:clamp(18px,1.45vw,22px);line-height:1.35;color:#3a352f}
+  .chips{display:flex;gap:14px;flex-wrap:wrap;list-style:none;padding:0;margin:0;font-size:13px;color:#3a352f}
+  .cue{position:absolute;left:40px;bottom:38px;display:flex;align-items:center;gap:12px;font-size:13px;color:#4a443c}
+  .cue-line{width:56px;height:1px;background:currentColor}
+  .link{background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+  .loader{position:absolute;right:40px;bottom:36px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#6b645a;transition:opacity .5s}
+  .loader.done{opacity:0}
+  .rail{position:absolute;left:40px;right:40px;bottom:18px;height:1px;background:rgba(29,26,23,.14)}
+  .rail-fill{position:absolute;inset:0;background:var(--ink);transform-origin:left;transform:scaleX(0)}
+  .rail-dot{position:absolute;top:50%;left:0;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--red)}
+
+  /* red interlude */
+  .red{position:relative;background:var(--red);color:#f4ece1;padding:22vh 40px;overflow:hidden}
+  .big{margin:0;font-size:clamp(44px,8.4vw,140px)}
+  .big span{display:block;opacity:0;transform:translateY(40px);transition:opacity .7s ease,transform .9s cubic-bezier(.2,.7,.2,1)}
+  .big span:nth-child(2){transition-delay:.12s}.big span:nth-child(3){transition-delay:.24s}
+  .red.in .big span{opacity:1;transform:none}
+  .red-note{margin:6vh 0 0;max-width:36ch;font-size:clamp(18px,1.6vw,23px);line-height:1.35;color:#f4dccd}
+
+  /* cakes */
+  .cakes{padding:140px 40px 120px}
+  .sec-head{display:flex;justify-content:space-between;align-items:end;gap:30px;margin-bottom:54px;flex-wrap:wrap}
+  .sec-head h2{margin:0;font-size:clamp(46px,6vw,100px)}
+  .sec-head p{margin:0;max-width:34ch;color:var(--muted);line-height:1.5;font-size:clamp(17px,1.4vw,20px)}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  .card{display:flex;flex-direction:column;gap:12px}
+  .card .art{aspect-ratio:1;border-radius:18px;overflow:hidden;background:var(--paper-2)}
+  .card .art img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+  .card:hover .art img{transform:scale(1.05)}
+  .card h3{margin:6px 0 0;font-size:24px;font-weight:700;font-variation-settings:'wdth' 115;letter-spacing:-.02em}
+  .card p{margin:0;color:var(--muted);font-size:15px;line-height:1.45;flex:1}
+  .card-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600}
+  .add{border:0;border-radius:999px;background:var(--ink);color:var(--cream);padding:10px 16px;font-size:13px;cursor:pointer;transition:background .25s,transform .2s}
+  .add:hover{background:var(--red)}
+  .add:active{transform:scale(.96)}
+
+  /* your turn */
+  .play{position:relative;padding:120px 40px 80px;background:var(--paper-2)}
+  .play-wrap{position:relative;border-radius:24px;overflow:hidden;background:var(--stage);height:min(76vh,720px);min-height:420px}
+  #playCanvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:ns-resize}
+  .play-wrap.pour #playCanvas{cursor:pointer}
+  .play-hint{position:absolute;left:50%;top:22px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;
+    background:rgba(250,246,240,.78);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);font-size:14px;font-weight:500;pointer-events:none;white-space:nowrap}
+  .play-hint svg{width:16px;height:16px;animation:nudge 1.4s ease-in-out infinite}
+  @keyframes nudge{0%,100%{transform:translateY(-2px)}50%{transform:translateY(3px)}}
+  .play-steps{position:absolute;left:22px;bottom:22px;display:flex;gap:8px}
+  .play-steps span{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(250,246,240,.7);font-size:12px;color:var(--muted)}
+  .play-steps span i{width:44px;height:3px;border-radius:2px;background:rgba(29,26,23,.15);overflow:hidden;position:relative}
+  .play-steps span i::after{content:"";position:absolute;inset:0;background:var(--red);transform-origin:left;transform:scaleX(var(--v,0))}
+  .play-steps span.on{color:var(--ink);font-weight:600}
+  .play-ctl{position:absolute;right:22px;bottom:22px;display:flex;gap:8px}
+  .btn{border:0;border-radius:999px;padding:12px 18px;font-size:14px;font-weight:500;cursor:pointer;background:rgba(250,246,240,.85);transition:background .2s,color .2s,transform .15s}
+  .btn.primary{background:var(--ink);color:var(--cream)}
+  .btn.primary.held{background:var(--red);transform:scale(.97)}
+  .btn[disabled]{opacity:.4;cursor:default}
+  .served{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none;opacity:0;transition:opacity .6s}
+  .served.on{opacity:1}
+  .served b{font-size:clamp(40px,6vw,88px);color:var(--cream);text-shadow:0 2px 30px rgba(40,20,10,.45)}
+
+  /* end */
+  .end{position:relative;min-height:100vh;padding:18vh 40px 32px;display:flex;flex-direction:column;overflow:hidden}
+  .end h2{margin:0;font-size:clamp(46px,8vw,132px);position:relative;z-index:1}
+  .pills{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin-top:30px;position:relative;z-index:1}
+  .pill{font-size:14px;text-decoration:underline;text-underline-offset:5px;text-decoration-thickness:1px}
+  .pill.solid{background:var(--ink);color:var(--cream);text-decoration:none;padding:13px 22px;border-radius:999px}
+  .end-img{position:absolute;right:0;bottom:0;width:min(900px,70vw);aspect-ratio:16/9;object-fit:cover;
+    -webkit-mask:linear-gradient(to right,transparent,#000 22%),linear-gradient(to top,#000 70%,transparent);-webkit-mask-composite:source-in;
+    mask:linear-gradient(to right,transparent,#000 22%) intersect,linear-gradient(to top,#000 70%,transparent)}
+  .end footer{margin-top:auto;font-size:12px;color:#6b645a;position:relative;z-index:1}
+
+  /* basket */
+  .drawer{position:fixed;top:0;right:0;bottom:0;z-index:80;width:min(420px,100vw);background:#f6f1e8;box-shadow:-30px 0 60px rgba(29,26,23,.2);
+    transform:translateX(105%);transition:transform .5s cubic-bezier(.7,0,.2,1);display:flex;flex-direction:column;padding:28px}
+  .drawer.open{transform:none}
+  .drawer h3{margin:0 0 20px;font-size:32px}
+  .x{position:absolute;top:24px;right:24px;width:42px;height:42px;border-radius:50%;border:1px solid rgba(29,26,23,.3);background:transparent;cursor:pointer;font-size:20px}
+  .lines{flex:1;overflow:auto;list-style:none;margin:0;padding:0}
+  .lines li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 0;border-bottom:1px solid rgba(29,26,23,.1);font-size:15px}
+  .qty{display:flex;align-items:center;gap:8px}
+  .qty button{width:28px;height:28px;border-radius:50%;border:1px solid rgba(29,26,23,.25);background:transparent;cursor:pointer}
+  .empty{color:var(--muted)}
+  .total{display:flex;justify-content:space-between;font-weight:600;padding:18px 0 14px}
+  .checkout{border:0;border-radius:999px;background:var(--ink);color:var(--cream);padding:15px;font-size:14px;cursor:pointer}
+  .note{margin:10px 0 0;font-size:12px;color:var(--muted);text-align:center}
+  .scrim{position:fixed;inset:0;z-index:75;background:rgba(29,26,23,.35);opacity:0;pointer-events:none;transition:opacity .4s}
+  .scrim.on{opacity:1;pointer-events:auto}
+
+  @media (max-width:860px){
+    .nav{padding:16px 20px;font-size:13px}.nav nav{gap:14px}.nav .hide-sm{display:none}
+    .hero-title{left:20px;top:70px;font-size:clamp(56px,20vw,120px)}
+    .tagline{left:20px;right:auto;top:calc(80px + 20vw);text-align:left}
+    .caps{left:20px;top:76px;width:calc(100% - 40px)}
+    .cue{left:20px;bottom:34px}.rail{left:20px;right:20px}.loader{right:20px}
+    .red{padding:16vh 20px}
+    .cakes,.play{padding-left:16px;padding-right:16px}
+    .cards{grid-template-columns:1fr 1fr;gap:14px}.card h3{font-size:19px}
+    .play-steps{left:12px;bottom:76px}.play-ctl{right:12px;left:12px;bottom:14px;justify-content:space-between}
+    .end{padding:16vh 20px 24px}.end-img{width:100vw}
+  }
+</style>
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="#story"><span class="dot"></span>Layers</a>
+  <nav>
+    <a class="hide-sm" href="#cakes">Cakes</a>
+    <a href="#play">Your turn</a>
+    <button class="order" id="cartBtn" aria-label="Open order">Order <b id="badge">0</b></button>
+  </nav>
+</header>
+
+<main>
+  <section id="story" class="story">
+    <div class="stage">
+      <canvas id="storyCanvas" role="img" aria-label="A chocolate layer cake on a travertine block. As you scroll, a knife cuts a slice, cream is poured over and a cherry drops on top."></canvas>
+      <div class="hero" id="hero">
+        <h1 class="hero-title display">Layers</h1>
+        <p class="tagline serif">A cake atelier. Cut clean, layered right and finished by hand.</p>
+      </div>
+      <div class="caps">
+        <article class="cap">
+          <span class="num">01 / 03</span>
+          <h2 class="display">Slice</h2>
+          <p class="serif">A long, warm knife and <em>one clean cut</em>, straight through to the stone.</p>
+          <ul class="chips"><li>Baked this morning</li><li>Ganache coat</li></ul>
+        </article>
+        <article class="cap">
+          <span class="num">02 / 03</span>
+          <h2 class="display">Layer</h2>
+          <p class="serif">Four layers of vanilla sponge, with <em>whipped cream</em> and <em>raspberry jam</em> between each.</p>
+          <ul class="chips"><li>Vanilla sponge</li><li>Raspberry jam</li><li>Fresh cream</li></ul>
+        </article>
+        <article class="cap">
+          <span class="num">03 / 03</span>
+          <h2 class="display">Finish</h2>
+          <p class="serif">Vanilla cream poured over warm, piped swirls and <em>one cherry</em> on top.</p>
+          <ul class="chips"><li>Poured to order</li><li>Hand piped</li></ul>
+        </article>
+      </div>
+      <div class="cue" id="cue"><span class="cue-line"></span>Scroll, or <button id="filmBtn" class="link">play the film</button></div>
+      <p class="loader" id="loader">Loading 0%</p>
+      <div class="rail" aria-hidden="true"><span class="rail-fill" id="railFill"></span><span class="rail-dot" id="railDot"></span></div>
+    </div>
+  </section>
+
+  <section class="red" id="red">
+    <p class="big display"><span>Cut clean.</span><span>Layered right.</span><span>Finished on top.</span></p>
+    <p class="red-note serif">Every cake is baked, layered and finished by the same two hands, the morning you collect it.</p>
+  </section>
+
+  <section id="cakes" class="cakes">
+    <div class="sec-head">
+      <h2 class="display">The cakes.</h2>
+      <p class="serif">Four layer cakes, sold by the slice or whole. Whole cakes need two days' notice.</p>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section id="play" class="play">
+    <div class="sec-head">
+      <h2 class="display">Your turn.</h2>
+      <p class="serif">Drag down on the cake to cut it. Then press and hold to pour the cream.</p>
+    </div>
+    <div class="play-wrap" id="playWrap">
+      <canvas id="playCanvas" role="img" aria-label="Interactive cake. Drag down to cut a slice, then press and hold to pour cream and drop the cherry." tabindex="0"></canvas>
+      <div class="play-hint" id="playHint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v16m-6-6 6 6 6-6"/></svg><span>Drag down to cut</span></div>
+      <div class="served" id="served"><b class="display">Served.</b></div>
+      <div class="play-steps" aria-hidden="true">
+        <span id="stCut" class="on">Cut <i id="mCut"></i></span>
+        <span id="stPour">Pour <i id="mPour"></i></span>
+      </div>
+      <div class="play-ctl">
+        <button class="btn primary" id="pourBtn" disabled>Hold to pour</button>
+        <button class="btn" id="againBtn">Start again</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="end">
+    <h2 class="display">Let’s bake yours.</h2>
+    <div class="pills">
+      <a class="pill solid" href="mailto:hello@example.com">hello@example.com</a>
+      <a class="pill" href="#">WhatsApp</a>
+      <a class="pill" href="#">Instagram</a>
+    </div>
+    <img class="end-img" src="assets/finished.webp" alt="The finished cake with cream drips, whipped cream swirls and a cherry" loading="lazy" decoding="async">
+    <footer>© 2026 Layers</footer>
+  </section>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Your order">
+  <h3 class="display">Your order</h3>
+  <button class="x" id="drawerClose" aria-label="Close order">×</button>
+  <ul class="lines" id="lines"></ul>
+  <div class="total"><span>Subtotal</span><span id="subtotal">£0.00</span></div>
+  <button class="checkout" id="checkout">Checkout</button>
+  <p class="note" id="checkoutNote">This is a demo shop. Checkout isn't connected yet.</p>
+</aside>
+
+<script>
+(() => {
+'use strict';
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- shared frame sequence (clip A: cut, clip B: cream + cherry) ---------- */
+const NA = 120, NB = 120, N = NA + NB;
+const DIR = Math.min(innerWidth, innerHeight * 1.78) < 900 ? 'assets/frames/640/' : 'assets/frames/960/';
+const frames = new Array(N); let loaded = 0;
+const listeners = new Set(); const changed = () => listeners.forEach(f => f());
+const loader = document.getElementById('loader');
+const queue = []; { const seen = new Set(); for (let st = 32; st >= 1; st >>= 1) for (let i = 0; i < N; i += st) if (!seen.has(i)){ seen.add(i); queue.push(i); } }
+let inflight = 0;
+function pump(){
+  while (inflight < 6 && queue.length){
+    const i = queue.shift(), im = new Image(); inflight++;
+    im.decoding = 'async';
+    im.onload = () => { frames[i] = im; loaded++; inflight--; changed();
+      loader.textContent = `Loading ${Math.round(loaded/N*100)}%`; if (loaded === N) loader.classList.add('done'); pump(); };
+    im.onerror = () => { inflight--; pump(); };
+    im.src = DIR + 'f_' + String(i + 1).padStart(3, '0') + '.webp';
+  }
+}
+pump();
+function frameNear(i){
+  i = Math.max(0, Math.min(N - 1, i));
+  if (frames[i]) return frames[i];
+  for (let d = 1; d < N; d++){ if (frames[i - d]) return frames[i - d]; if (frames[i + d]) return frames[i + d]; }
+  return null;
+}
+function drawCover(ctx, img, w, h, zoomOut){
+  const iw = img.naturalWidth, ih = img.naturalHeight, s = Math.max(w/iw, h/ih) * zoomOut, dw = iw*s, dh = ih*s;
+  ctx.fillStyle = '#d9cebd'; ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, (w - dw)/2, (h - dh)/2 + (zoomOut < 1 ? h*.06 : 0), dw, dh);
+}
+function fit(cv){
+  const dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
+  const bw = Math.round(w*dpr), bh = Math.round(h*dpr), resized = cv.width !== bw || cv.height !== bh;
+  if (resized){ cv.width = bw; cv.height = bh; }
+  return { w, h, dpr, resized };
+}
+
+/* ---------- story (scroll) ---------- */
+const storyEl = document.getElementById('story'), scv = document.getElementById('storyCanvas'), sctx = scv.getContext('2d');
+const hero = document.getElementById('hero'), caps = [...document.querySelectorAll('.cap')];
+const cue = document.getElementById('cue'), railFill = document.getElementById('railFill'), railDot = document.getElementById('railDot');
+const CAP_AT = [.05, .33, .52];   // Slice, Layer, Finish (share of the scroll)
+let pT = 0, pS = 0, sDirty = true, sKey = '', curCap = -2, storyVis = true;
+listeners.add(() => { sDirty = true; });
+function readProgress(){ const r = storyEl.getBoundingClientRect(); pT = clamp(-r.top/Math.max(1, storyEl.offsetHeight - innerHeight)); }
+addEventListener('scroll', readProgress, { passive: true }); addEventListener('resize', () => { readProgress(); sDirty = true; pDirty = true; }); readProgress();
+
+function renderStory(dt){
+  pS += (pT - pS)*(1 - Math.exp(-dt*9)); if (Math.abs(pT - pS) < 1e-4) pS = pT;
+  const p = pS, fi = Math.round(clamp((p - .02)/.94)*(N - 1));
+  const { w, h, dpr, resized } = fit(scv), key = fi + ':' + w + 'x' + h;
+  if (resized || sDirty || key !== sKey){
+    sDirty = false; sKey = key;
+    const img = frameNear(fi);
+    if (img){ sctx.setTransform(dpr, 0, 0, dpr, 0, 0); drawCover(sctx, img, w, h, w < h ? .8 : 1); }
+  }
+  const hp = clamp(p/.05);
+  hero.style.opacity = String(1 - hp); hero.style.transform = `translateY(${-hp*30}px)`;
+  let idx = -1; for (let i = 0; i < CAP_AT.length; i++) if (p >= CAP_AT[i]) idx = i;
+  if (idx !== curCap){ caps.forEach((c, i) => c.classList.toggle('on', i === idx)); curCap = idx; }
+  cue.style.opacity = String(1 - clamp(p/.03));
+  railFill.style.transform = `scaleX(${p})`; railDot.style.left = (p*100) + '%';
+}
+
+let film = null;
+document.getElementById('filmBtn').addEventListener('click', () => {
+  const top = storyEl.offsetTop, end = top + storyEl.offsetHeight - innerHeight, start = Math.max(scrollY, top);
+  film = { start, end, t0: performance.now(), dur: Math.max(1500, 16000*(end - start)/Math.max(1, end - top)) };
+});
+['wheel', 'touchstart', 'keydown'].forEach(ev => addEventListener(ev, () => { film = null; }, { passive: true }));
+
+/* ---------- your turn (drag to cut, hold to pour) ---------- */
+const wrap = document.getElementById('playWrap'), pcv = document.getElementById('playCanvas'), pctx = pcv.getContext('2d');
+const hint = document.getElementById('playHint'), hintText = hint.querySelector('span'), served = document.getElementById('served');
+const pourBtn = document.getElementById('pourBtn'), stCut = document.getElementById('stCut'), stPour = document.getElementById('stPour');
+const mCut = document.getElementById('mCut'), mPour = document.getElementById('mPour');
+const P = { cut: 0, pour: 0, cutS: 0, pourS: 0, pouring: false, drag: null, phase: 'cut' };
+let pDirty = true, pKey = '', playVis = false;
+listeners.add(() => { pDirty = true; });
+
+function setPhase(ph){
+  if (P.phase === ph) return; P.phase = ph;
+  wrap.classList.toggle('pour', ph === 'pour');
+  stCut.classList.toggle('on', ph === 'cut'); stPour.classList.toggle('on', ph !== 'cut');
+  pourBtn.disabled = ph !== 'pour';
+  hint.style.opacity = ph === 'done' ? '0' : '1';
+  hintText.textContent = ph === 'cut' ? 'Drag down to cut' : 'Press and hold to pour';
+  hint.querySelector('svg').style.display = ph === 'cut' ? '' : 'none';
+  served.classList.toggle('on', ph === 'done');
+}
+function resetPlay(){ Object.assign(P, { cut: 0, pour: 0, cutS: 0, pourS: 0, pouring: false, drag: null }); P.phase = ''; setPhase('cut'); pDirty = true; }
+const startPour = () => { if (P.phase === 'pour'){ P.pouring = true; pourBtn.classList.add('held'); } };
+const stopPour = () => { P.pouring = false; pourBtn.classList.remove('held'); };
+
+pcv.addEventListener('pointerdown', e => {
+  if (P.phase === 'cut'){ P.drag = { y: e.clientY, from: P.cut }; try { pcv.setPointerCapture(e.pointerId); } catch (_) {} }
+  else startPour();
+});
+pcv.addEventListener('pointermove', e => {
+  if (!P.drag || P.phase !== 'cut') return;
+  P.cut = clamp(P.drag.from + (e.clientY - P.drag.y)/(pcv.clientHeight*.55));
+  if (P.cut >= 1){ P.drag = null; setPhase('pour'); }
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => pcv.addEventListener(ev, () => { P.drag = null; stopPour(); }));
+pourBtn.addEventListener('pointerdown', e => { e.preventDefault(); startPour(); });
+['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => pourBtn.addEventListener(ev, stopPour));
+pcv.addEventListener('keydown', e => {
+  if (P.phase === 'cut' && (e.key === 'ArrowDown' || e.key === ' ')){ e.preventDefault(); P.cut = clamp(P.cut + .08); if (P.cut >= 1) setPhase('pour'); }
+  else if (P.phase === 'pour' && e.key === ' '){ e.preventDefault(); startPour(); }
+});
+pcv.addEventListener('keyup', e => { if (e.key === ' ') stopPour(); });
+pourBtn.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); startPour(); } });
+pourBtn.addEventListener('keyup', stopPour);
+document.getElementById('againBtn').addEventListener('click', resetPlay);
+
+function updatePlay(dt){
+  if (P.pouring){ P.pour = clamp(P.pour + dt/7); if (P.pour >= 1){ stopPour(); setPhase('done'); } }
+  P.cutS += (P.cut - P.cutS)*(1 - Math.exp(-dt*10)); P.pourS += (P.pour - P.pourS)*(1 - Math.exp(-dt*10));
+  mCut.style.setProperty('--v', P.cutS.toFixed(3)); mPour.style.setProperty('--v', P.pourS.toFixed(3));
+}
+function renderPlay(){
+  const fi = P.phase === 'cut' ? Math.round(P.cutS*(NA - 1)) : NA + Math.round(P.pourS*(NB - 1));
+  const { w, h, dpr, resized } = fit(pcv), key = fi + ':' + w + 'x' + h;
+  if (!resized && !pDirty && key === pKey) return;
+  pDirty = false; pKey = key;
+  const img = frameNear(fi); if (!img) return;
+  pctx.setTransform(dpr, 0, 0, dpr, 0, 0); drawCover(pctx, img, w, h, w < h ? .8 : 1);
+}
+resetPlay();
+
+/* ---------- cakes + order ---------- */
+const CAKES = [
+  { id: 'chocolate', name: 'No. 1 Chocolate', note: 'Vanilla sponge, raspberry jam, ganache coat, one cherry.', price: 7.5 },
+  { id: 'lemon', name: 'Lemon Curd', note: 'Lemon sponge, curd, mascarpone and candied peel.', price: 7 },
+  { id: 'redvelvet', name: 'Red Velvet', note: 'Cocoa buttermilk sponge with cream cheese frosting.', price: 7 },
+  { id: 'pistachio', name: 'Pistachio', note: 'Roasted pistachio sponge, cream and pistachio drizzle.', price: 8 }
+];
+const money = n => '£' + n.toFixed(2);
+const cardsEl = document.getElementById('cards');
+cardsEl.innerHTML = CAKES.map(c => `
+  <article class="card">
+    <div class="art"><img src="assets/slice-${c.id}.webp" alt="A slice of ${c.name.replace('No. 1 ', '')} cake" width="800" height="800" loading="lazy" decoding="async"></div>
+    <h3>${c.name}</h3><p class="serif">${c.note}</p>
+    <div class="card-row"><span>${money(c.price)} a slice</span><button class="add" data-id="${c.id}">Add</button></div>
+  </article>`).join('');
+const cart = new Map(), badge = document.getElementById('badge'), linesEl = document.getElementById('lines'), subtotalEl = document.getElementById('subtotal');
+function renderCart(){
+  let n = 0, sum = 0; const rows = [];
+  for (const [id, q] of cart){ const c = CAKES.find(x => x.id === id); n += q; sum += q*c.price;
+    rows.push(`<li><span>${c.name}</span><span class="qty"><button data-dec="${id}" aria-label="Remove one ${c.name}">−</button>${q}<button data-inc="${id}" aria-label="Add one ${c.name}">+</button></span><span>${money(q*c.price)}</span></li>`); }
+  linesEl.innerHTML = rows.length ? rows.join('') : '<li class="empty">Nothing here yet.</li>';
+  subtotalEl.textContent = money(sum); badge.textContent = n;
+}
+const addTo = (id, d) => { const q = (cart.get(id) || 0) + d; if (q <= 0) cart.delete(id); else cart.set(id, q); renderCart(); };
+cardsEl.addEventListener('click', e => { const b = e.target.closest('.add'); if (!b) return; addTo(b.dataset.id, 1); b.textContent = 'Added'; setTimeout(() => { b.textContent = 'Add'; }, 900); });
+linesEl.addEventListener('click', e => { const t = e.target; if (t.dataset.inc) addTo(t.dataset.inc, 1); if (t.dataset.dec) addTo(t.dataset.dec, -1); });
+renderCart();
+const drawer = document.getElementById('drawer'), scrim = document.getElementById('scrim');
+const openDrawer = v => { drawer.classList.toggle('open', v); scrim.classList.toggle('on', v); if (v) document.getElementById('drawerClose').focus(); };
+document.getElementById('cartBtn').onclick = () => openDrawer(true);
+document.getElementById('drawerClose').onclick = () => openDrawer(false);
+scrim.onclick = () => openDrawer(false);
+addEventListener('keydown', e => { if (e.key === 'Escape') openDrawer(false); });
+document.getElementById('checkout').onclick = () => { document.getElementById('checkoutNote').textContent = cart.size ? 'Thanks! This demo shop stops here, so no payment was taken.' : 'Add a slice first.'; };
+
+/* ---------- reveal, nav theme, loop ---------- */
+const red = document.getElementById('red');
+new IntersectionObserver((en, obs) => { if (en[0].isIntersecting){ red.classList.add('in'); obs.disconnect(); } }, { threshold: .35 }).observe(red);
+const io = new IntersectionObserver(es => { for (const e of es){ if (e.target === storyEl) storyVis = e.isIntersecting; else playVis = e.isIntersecting; } }, { rootMargin: '100px' });
+io.observe(storyEl); io.observe(wrap);
+function updateTheme(){ const r = red.getBoundingClientRect(); document.body.classList.toggle('on-dark', r.top <= 40 && r.bottom > 40); }
+
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(.05, (now - last)/1000); last = now;
+  if (film){ const t = clamp((now - film.t0)/film.dur); scrollTo(0, film.start + (film.end - film.start)*t); if (t >= 1) film = null; }
+  if (storyVis) renderStory(dt);
+  if (playVis){ updatePlay(dt); renderPlay(); }
+  updateTheme();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
